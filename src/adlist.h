@@ -45,7 +45,7 @@ typedef struct listNode {
     struct listNode *next;
 
     // 节点的值
-    void *value;
+    void *value;  // interface{}
 
 } listNode;
 

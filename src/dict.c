@@ -388,7 +388,7 @@ int dictRehash(dict *d, int n) {
         // 指向该索引的链表表头节点
         de = d->ht[0].table[d->rehashidx];
         /* Move all the keys in this bucket from the old to the new hash HT */
-        // 将链表中的所有节点迁移到新哈希表
+        // 将链表中的所有哈希桶迁移到新哈希表
         // T = O(1)
         while(de) {
             unsigned int h;
