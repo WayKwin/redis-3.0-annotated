@@ -382,10 +382,10 @@ int dictRehash(dict *d, int n) {
         // 确保 rehashidx 没有越界
         assert(d->ht[0].size > (unsigned)d->rehashidx);
 
-        // 略过数组中为空的索引，找到下一个非空索引
+        // 略过数组中为空的索引，找到下一个非空索引 // ht[0]是需要被rehash(迁移)的哈希表，rehashindex也是指ht[0]上的索引
         while(d->ht[0].table[d->rehashidx] == NULL) d->rehashidx++;
 
-        // 指向该索引的链表表头节点
+        // 指向该索引的哈希桶
         de = d->ht[0].table[d->rehashidx];
         /* Move all the keys in this bucket from the old to the new hash HT */
         // 将链表中的所有哈希桶迁移到新哈希表
@@ -400,7 +400,8 @@ int dictRehash(dict *d, int n) {
             // 计算新哈希表的哈希值，以及节点插入的索引位置
             h = dictHashKey(d, de->key) & d->ht[1].sizemask;
 
-            // 插入节点到新哈希表
+            // 插入节点到新哈希表 插入总是采用头插法
+            //迁移之后哈希桶在ht[0]和ht[1]的顺序会颠倒
             de->next = d->ht[1].table[h];
             d->ht[1].table[h] = de;
 
@@ -483,7 +484,7 @@ static void _dictRehashStep(dict *d) {
  *
  * 添加成功返回 DICT_OK ，失败返回 DICT_ERR
  *
- * 最坏 T = O(N) ，平滩 O(1) 
+ * 最坏 T = O(N) ，平滩 O(1)  N: hash buckets长度（单链表的遍历)
  */
 int dictAdd(dict *d, void *key, void *val)
 {
@@ -822,7 +823,7 @@ dictEntry *dictFind(dict *d, const void *key)
     // 字典（的哈希表）为空
     if (d->ht[0].size == 0) return NULL; /* We don't have a table at all */
 
-    // 如果条件允许的话，进行单步 rehash
+    // 如果条件允许的话，进行单步 rehash // find will exec rehash
     if (dictIsRehashing(d)) _dictRehashStep(d);
 
     // 计算键的哈希值
@@ -1414,7 +1415,7 @@ static int _dictExpandIfNeeded(dict *d)
     //    并且 dict_can_resize 为真
     // 2）已使用节点数和字典大小之间的比率超过 dict_force_resize_ratio
     if (d->ht[0].used >= d->ht[0].size &&
-        (dict_can_resize ||
+        (dict_can_resize ||  // confused: why  used/size > 5 ??
          d->ht[0].used/d->ht[0].size > dict_force_resize_ratio))
     {
         // 新哈希表的大小至少是目前已使用节点数的两倍
@@ -1439,7 +1440,7 @@ static unsigned long _dictNextPower(unsigned long size)
     while(1) {
         if (i >= size)
             return i;
-        i *= 2;
+        i  =  i << 1;
     }
 }
 
@@ -1489,7 +1490,7 @@ static int _dictKeyIndex(dict *d, const void *key)
         }
 
         // 如果运行到这里时，说明 0 号哈希表中所有节点都不包含 key
-        // 如果这时 rehahs 正在进行，那么继续对 1 号哈希表进行 rehash
+        // 如果这时 rehash 正在进行并且ht[0]中没有找到，还要在ht[1]中查找
         if (!dictIsRehashing(d)) break;
     }
 

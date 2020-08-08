@@ -121,7 +121,8 @@ typedef struct dictht {
     unsigned long size;
     
     // 哈希表大小掩码，用于计算索引值
-    // 总是等于 size - 1
+    // 总是等于 size - 1 , 比取余快得多， 哈希表分配的size总是2^n
+    // mask保证低位全是1， 使用 val & 全为1的数，就是对2^n进行取余
     unsigned long sizemask;
 
     // 该哈希表已有节点的数量
@@ -145,6 +146,8 @@ typedef struct dict {
 
     // rehash 索引
     // 当 rehash 不在进行时，值为 -1
+    // rehashidx都是递增的，会不会造成rehashidx前面的hash bukets漏掉？
+    // 不可能。当rehash时，ht[0]不再执行插入操作，rehash递增扫描ht[0]即可
     int rehashidx; /* rehashing not in progress if rehashidx == -1 */
 
     // 目前正在运行的安全迭代器的数量
