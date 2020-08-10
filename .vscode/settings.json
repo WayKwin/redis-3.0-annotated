@@ -1,5 +1,18 @@
 {
     "files.associations": {
-        "__node_handle": "cpp"
-    }
+        "__node_handle": "cpp",
+        "__config": "cpp",
+        "__hash_table": "cpp",
+        "functional": "cpp",
+        "iterator": "cpp",
+        "locale": "cpp",
+        "memory": "cpp",
+        "ratio": "cpp",
+        "tuple": "cpp",
+        "type_traits": "cpp",
+        "typeinfo": "cpp",
+        "*.inc": "cpp",
+        "__locale": "cpp"
+    },
+    "restructuredtext.confPath": ""
 }

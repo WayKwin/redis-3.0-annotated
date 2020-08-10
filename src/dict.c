@@ -690,7 +690,7 @@ static int dictGenericDelete(dict *d, const void *key, int nofree)
                 else
                     d->ht[table].table[idx] = he->next;
 
-                // 释放调用键和值的释放函数？
+                // 释放调用键和值的释放函数
                 if (!nofree) {
                     dictFreeKey(d, he);
                     dictFreeVal(d, he);
@@ -767,7 +767,7 @@ int _dictClear(dict *d, dictht *ht, void(callback)(void *)) {
         // T = O(1)
         while(he) {
             nextHe = he->next;
-            // 删除键
+            // 删除键 //为什么不调用 dictDelete? dictDelete默认不知道Entry在table上的位置，所以会在两个ht上查找。时间复杂度大于此处的直接free
             dictFreeKey(d, he);
             // 删除值
             dictFreeVal(d, he);
@@ -1415,7 +1415,7 @@ static int _dictExpandIfNeeded(dict *d)
     //    并且 dict_can_resize 为真
     // 2）已使用节点数和字典大小之间的比率超过 dict_force_resize_ratio
     if (d->ht[0].used >= d->ht[0].size &&
-        (dict_can_resize ||  // confused: why  used/size > 5 ??
+        (dict_can_resize ||  // confused: why  used/size > 5 ?? 这里是哈希桶的方法，used指所有节点，size指的是数组长度
          d->ht[0].used/d->ht[0].size > dict_force_resize_ratio))
     {
         // 新哈希表的大小至少是目前已使用节点数的两倍

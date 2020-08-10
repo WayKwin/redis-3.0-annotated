@@ -365,6 +365,7 @@ void listRewindTail(list *list, listIter *li) {
  */
 listNode *listNext(listIter *iter)
 {
+    //提前保存了当前节点的下一个节点，不存在其它语言中使用迭代器删除节点失效的问题。
     listNode *current = iter->next;
 
     if (current != NULL) {
