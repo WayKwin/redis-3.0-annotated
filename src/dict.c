@@ -601,7 +601,7 @@ int dictReplace(dict *d, void *key, void *val)
      * as the previous one. In this context, think to reference counting,
      * you want to increment (set), and then decrement (free), and not the
      * reverse. */
-    // 先保存原有的值的指针
+    //注意结构体拷贝,各个成员是deepy copy, entry中成员都是指针，所以和entry指向同一片地址。
     auxentry = *entry;
     // 然后设置新的值
     // T = O(1)

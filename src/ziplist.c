@@ -1441,7 +1441,7 @@ unsigned char *ziplistInsert(unsigned char *zl, unsigned char *p, unsigned char 
  * 从 zl 中删除 *p 所指向的节点，
  * 并且原地更新 *p 所指向的位置，使得可以在迭代列表的过程中对节点进行删除。
  *
- * T = O(N^2)
+ * T = O(N)
  */
 unsigned char *ziplistDelete(unsigned char *zl, unsigned char **p) {
 

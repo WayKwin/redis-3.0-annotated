@@ -112,7 +112,7 @@ zskiplist *zslCreate(void) {
     zsl->length = 0;
 
     // 初始化表头节点
-    // T = O(1)
+    // T = O(1) //头节点的level是32个
     zsl->header = zslCreateNode(ZSKIPLIST_MAXLEVEL,0,NULL);
     for (j = 0; j < ZSKIPLIST_MAXLEVEL; j++) {
         zsl->header->level[j].forward = NULL;
@@ -278,22 +278,23 @@ zskiplistNode *zslInsert(zskiplist *zsl, double score, robj *obj) {
         update[i]->level[i].forward = x;
 
         /* update span covered by update[i] as x is inserted here */
-        // 计算新节点跨越的节点数量
+        // 计算新节点跨越的节点数量   rank[0]是合适插入点前总节点数量， rank[i]是当前层中，合适插入点前总节点数量。
         x->level[i].span = update[i]->level[i].span - (rank[0] - rank[i]);
 
         // 更新新节点插入之后，沿途节点的 span 值
-        // 其中的 +1 计算的是新节点
+        // 其中的 +1 计算的是新节点   
         update[i]->level[i].span = (rank[0] - rank[i]) + 1;
     }
 
-    /* increment span for untouched levels */
-    // 未接触的节点的 span 值也需要增一，这些节点直接从表头指向新节点
+    /* increment span for untouched levels */ 
+    // 新创建的层中，span的长度为链表的超度，因为新加入了节点，所以span+1
+    //因为 未接触的节点
     // T = O(1)
     for (i = level; i < zsl->level; i++) {
         update[i]->level[i].span++;
     }
 
-    // 设置新节点的后退指针
+    // 维护新节点插入后双链表结构
     x->backward = (update[0] == zsl->header) ? NULL : update[0];
     if (x->level[0].forward)
         x->level[0].forward->backward = x;

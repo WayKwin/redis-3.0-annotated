@@ -12,7 +12,7 @@
         "type_traits": "cpp",
         "typeinfo": "cpp",
         "*.inc": "cpp",
-        "__locale": "cpp"
+        "__locale": "cppincludePath"
     },
-    "restructuredtext.confPath": ""
+    "restructuredtext.confPath": "",
 }
