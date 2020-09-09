@@ -196,6 +196,7 @@ int zslRandomLevel(void) {
  * T_wrost = O(N^2), T_avg = O(N log N)
  */
 zskiplistNode *zslInsert(zskiplist *zsl, double score, robj *obj) {
+    // update:跳表每层直接和插入节点连接的前节点
     zskiplistNode *update[ZSKIPLIST_MAXLEVEL], *x;
     unsigned int rank[ZSKIPLIST_MAXLEVEL];
     int i, level;
@@ -208,15 +209,15 @@ zskiplistNode *zslInsert(zskiplist *zsl, double score, robj *obj) {
     for (i = zsl->level-1; i >= 0; i--) {
 
         /* store rank that is crossed to reach the insert position */
-        // 如果 i 不是 zsl->level-1 层
-        // 那么 i 层的起始 rank 值为 i+1 层的 rank 值
         // 各个层的 rank 值一层层累积
+        // rank就是update[i]和插入节点的距离
         // 最终 rank[0] 的值加一就是新节点的前置节点的排位
         // rank[0] 会在后面成为计算 span 值和 rank 值的基础
         rank[i] = i == (zsl->level-1) ? 0 : rank[i+1];
 
         // 沿着前进指针遍历跳跃表
-        // T_wrost = O(N^2), T_avg = O(N log N)
+        //跳表的遍历路径都是从左往右下楼梯,  删除停在待删除的前一个节点，插入停在待插入的前一个节点
+        // T_wrost = O(N), T_avg = O(N log N)
         while (x->level[i].forward &&
             (x->level[i].forward->score < score ||
                 // 比对分值
@@ -287,8 +288,8 @@ zskiplistNode *zslInsert(zskiplist *zsl, double score, robj *obj) {
     }
 
     /* increment span for untouched levels */ 
-    // 新创建的层中，span的长度为链表的超度，因为新加入了节点，所以span+1
-    //因为 未接触的节点
+    // 新创建的层中，span的长度为链表的长度，因为新加入了节点，所以span+1
+    //因为未接触的节点
     // T = O(1)
     for (i = level; i < zsl->level; i++) {
         update[i]->level[i].span++;
@@ -317,6 +318,7 @@ zskiplistNode *zslInsert(zskiplist *zsl, double score, robj *obj) {
 void zslDeleteNode(zskiplist *zsl, zskiplistNode *x, zskiplistNode **update) {
     int i;
 
+    //双链表的节点删除操作
     // 更新所有和被删除节点 x 有关的节点的指针，解除它们之间的关系
     // T = O(1)
     for (i = 0; i < zsl->level; i++) {
@@ -329,6 +331,7 @@ void zslDeleteNode(zskiplist *zsl, zskiplistNode *x, zskiplistNode **update) {
     }
 
     // 更新被删除节点 x 的前进和后退指针
+    // 双向链表的节点删除
     if (x->level[0].forward) {
         x->level[0].forward->backward = x->backward;
     } else {
@@ -355,6 +358,7 @@ int zslDelete(zskiplist *zsl, double score, robj *obj) {
     int i;
 
     // 遍历跳跃表，查找目标节点，并记录所有沿途节点
+    //跳表的遍历路径都是从左往右下楼梯,  删除停在待删除的前一个节点，插入停在待插入的前一个节点
     // T_wrost = O(N^2), T_avg = O(N log N)
     x = zsl->header;
     for (i = zsl->level-1; i >= 0; i--) {
@@ -392,7 +396,7 @@ int zslDelete(zskiplist *zsl, double score, robj *obj) {
 
     return 0; /* not found */
 }
-
+//range 有两大类型1.socres 2.rank
 /*
  * 检测给定值 value 是否大于（或大于等于）范围 spec 中的 min 项。
  *
@@ -466,7 +470,7 @@ zskiplistNode *zslFirstInRange(zskiplist *zsl, zrangespec *range) {
     for (i = zsl->level-1; i >= 0; i--) {
         /* Go forward while *OUT* of range. */
         while (x->level[i].forward &&
-            !zslValueGteMin(x->level[i].forward->score,range))
+            !zslValueGteMin(x->level[i].forward->score,range)) //一直找到 区间左边第一个值, 1 [2,4] find:2
                 x = x->level[i].forward;
     }
 
@@ -524,7 +528,7 @@ zskiplistNode *zslLastInRange(zskiplist *zsl, zrangespec *range) {
 
 /* Delete all the elements with score between min and max from the skiplist.
  *
- * 删除所有分值在给定范围之内的节点。
+ *  del elements with socre in [min,max] (inclusive
  *
  * Min and max are inclusive, so a score >= min || score <= max is deleted.
  * 
